@@ -405,6 +405,60 @@ class SerializdClient:
 
         return True
 
+    def get_user_diary(self, username: str, page: int = 1) -> dict[str, Any]:
+        """
+        Fetches diary entries for a user.
+
+        Args:
+            username: Serializd username
+            page: Page number (default: 1)
+
+        Returns:
+            Dict with 'reviews' list and pagination info.
+
+        Raises:
+            SerializdError: Serializd returned an error
+        """
+        resp = self.session.get(f'/user/{username}/diary', params={'page': page})
+        if not resp.is_success:
+            self.logger.error('Failed to fetch diary for user %s!', username)
+
+        return self._parse_response(resp)
+
+    def get_all_diary_entries(self, username: str) -> list[dict[str, Any]]:
+        """
+        Fetches all diary entries for a user (all pages).
+
+        Args:
+            username: Serializd username
+
+        Returns:
+            List of all diary entry dicts.
+
+        Raises:
+            SerializdError: Serializd returned an error
+        """
+        all_entries = []
+        page = 1
+
+        while True:
+            self.logger.info('Fetching diary page %d for user %s', page, username)
+            data = self.get_user_diary(username, page=page)
+            reviews = data.get('reviews', [])
+
+            if not reviews:
+                break
+
+            all_entries.extend(reviews)
+            total_pages = data.get('totalPages', 1)
+
+            if page >= total_pages:
+                break
+
+            page += 1
+
+        return all_entries
+
     def _parse_response(
         self,
         resp: httpx.Response,
