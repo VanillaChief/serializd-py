@@ -339,7 +339,8 @@ class SerializdClient:
         watched_at: str,
         is_rewatch: bool = False,
         rating: int = 0,
-        review_text: str = ""
+        review_text: str = "",
+        mark_as_watched: bool = True
     ) -> bool:
         """
         Adds an episode to the user's diary with a specific watch date.
@@ -358,6 +359,7 @@ class SerializdClient:
             is_rewatch: Whether this is a rewatch of a previously seen episode
             rating: Optional rating (0-10, 0 means no rating)
             review_text: Optional review text
+            mark_as_watched: Also mark the episode as watched (default: True)
 
         Returns:
             Success status.
@@ -365,6 +367,21 @@ class SerializdClient:
         Raises:
             SerializdError: Serializd returned an error
         """
+        # First, mark the episode as watched using episode_log/add
+        # This ensures the episode shows up in the watched list, not just the diary
+        if mark_as_watched:
+            watched_success = self.log_episodes(
+                show_id=show_id,
+                season_id=season_id,
+                episode_numbers=[episode_number]
+            )
+            if not watched_success:
+                self.logger.warning(
+                    'Failed to mark episode %d as watched, continuing with diary entry',
+                    episode_number
+                )
+
+        # Then add to diary with the specific date
         params = DiaryEntryRequest(
             show_id=show_id,
             season_id=season_id,
