@@ -146,7 +146,7 @@ class SerializdClient:
         resp = self.session.get(f'/show/{show_id}/season/{season_number}')
         if not resp.is_success:
             self.logger.error(
-                'Failed to fetch season information for show ID %d, season %02d!',
+                'Failed to fetch season information for show ID %s, season %s!',
                 show_id, season_number
             )
 
