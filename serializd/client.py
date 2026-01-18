@@ -6,7 +6,12 @@ import httpx
 
 from serializd.consts import APP_ID, AUTH_COOKIE_NAME, BASE_URL, COOKIE_DOMAIN, FRONT_PAGE_URL
 from serializd.exceptions import EmptySeasonError, InvalidTokenError, LoginError, SerializdError
-from serializd.models.actions import LogEpisodesRequest, LogSeasonsRequest, UnlogEpisodesRequest
+from serializd.models.actions import (
+    DiaryEntryRequest,
+    LogEpisodesRequest,
+    LogSeasonsRequest,
+    UnlogEpisodesRequest,
+)
 from serializd.models.auth import (
     LoginRequest,
     LoginResponse,
@@ -320,6 +325,63 @@ class SerializdClient:
             self.logger.error(
                 'Failed to unlog epsiodes of season ID %d (show ID %d) as watched!',
                 episode_numbers, season_id, show_id
+            )
+            self._parse_response(resp)
+            return False
+
+        return True
+
+    def log_episode_to_diary(
+        self,
+        show_id: int,
+        season_id: int,
+        episode_number: int,
+        watched_at: str,
+        is_rewatch: bool = False,
+        rating: int = 0,
+        review_text: str = ""
+    ) -> bool:
+        """
+        Adds an episode to the user's diary with a specific watch date.
+
+        Uses the /show/reviews/add endpoint which supports backdating entries.
+        This is the preferred method for migrating watch history with dates.
+
+        Note: This logs one episode at a time. For bulk logging without dates,
+              use log_episodes() instead.
+
+        Args:
+            show_id: TMDB show ID
+            season_id: Serializd season ID
+            episode_number: Episode number within the season
+            watched_at: ISO 8601 datetime string (e.g., '2024-01-15T12:00:00Z')
+            is_rewatch: Whether this is a rewatch of a previously seen episode
+            rating: Optional rating (0-10, 0 means no rating)
+            review_text: Optional review text
+
+        Returns:
+            Success status.
+
+        Raises:
+            SerializdError: Serializd returned an error
+        """
+        params = DiaryEntryRequest(
+            show_id=show_id,
+            season_id=season_id,
+            episode_number=episode_number,
+            backdate=watched_at,
+            is_rewatch=is_rewatch,
+            rating=rating,
+            review_text=review_text
+        )
+        resp = self.session.post(
+            '/show/reviews/add',
+            data=params.model_dump_json()
+        )
+        if not resp.is_success:
+            self.logger.error(
+                'Failed to add episode %d of season ID %d (show ID %d) to diary!',
+                episode_number, season_id, show_id
             )
             self._parse_response(resp)
             return False
