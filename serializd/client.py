@@ -370,15 +370,21 @@ class SerializdClient:
         # First, mark the episode as watched using episode_log/add
         # This ensures the episode shows up in the watched list, not just the diary
         if mark_as_watched:
-            watched_success = self.log_episodes(
-                show_id=show_id,
-                season_id=season_id,
-                episode_numbers=[episode_number]
-            )
-            if not watched_success:
+            try:
+                watched_success = self.log_episodes(
+                    show_id=show_id,
+                    season_id=season_id,
+                    episode_numbers=[episode_number]
+                )
+                if not watched_success:
+                    self.logger.warning(
+                        'Failed to mark episode %d as watched, continuing with diary entry',
+                        episode_number
+                    )
+            except Exception as e:
                 self.logger.warning(
-                    'Failed to mark episode %d as watched, continuing with diary entry',
-                    episode_number
+                    'Error marking episode %d as watched (%s), continuing with diary entry',
+                    episode_number, str(e)
                 )
 
         # Then add to diary with the specific date
