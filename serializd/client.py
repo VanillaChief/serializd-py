@@ -286,7 +286,7 @@ class SerializdClient:
         )
         if not resp.is_success:
             self.logger.error(
-                'Failed to log epsiodes of season ID %d (show ID %d) as watched!',
+                'Failed to log episodes %s of season ID %d (show ID %d) as watched!',
                 episode_numbers, season_id, show_id
             )
             self._parse_response(resp)
@@ -323,7 +323,7 @@ class SerializdClient:
         )
         if not resp.is_success:
             self.logger.error(
-                'Failed to unlog epsiodes of season ID %d (show ID %d) as watched!',
+                'Failed to unlog episodes %s of season ID %d (show ID %d) as watched!',
                 episode_numbers, season_id, show_id
             )
             self._parse_response(resp)
