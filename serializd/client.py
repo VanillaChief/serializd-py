@@ -517,6 +517,29 @@ class SerializdClient:
 
         return all_entries
 
+    def delete_diary_entry(self, review_id: int) -> bool:
+        """
+        Deletes a diary entry (review) by ID.
+
+        Args:
+            review_id: The ID of the diary entry/review to delete
+
+        Returns:
+            True if deletion was successful, False otherwise.
+
+        Raises:
+            SerializdError: Serializd returned an error
+        """
+        resp = self.session.post(
+            '/show/reviews/delete',
+            json={'review_id': review_id}
+        )
+        if not resp.is_success:
+            self.logger.error('Failed to delete diary entry %d!', review_id)
+            return False
+        
+        return True
+
     def _parse_response(
         self,
         resp: httpx.Response,
