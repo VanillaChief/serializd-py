@@ -161,6 +161,58 @@ class SerializdClient:
 
         return SeasonResponse(**parsed)
 
+    def get_user_show_progress(self, username: str, show_id: int) -> dict:
+        """
+        Fetches watched episode progress for a show for a specific user.
+
+        Args:
+            username: Serializd username
+            show_id: TMDB show ID
+
+        Returns:
+            Dict with watched episodes data
+
+        Raises:
+            SerializdError: Serializd returned an error
+        """
+        resp = self.session.get(f'/user/{username}/show/{show_id}/progress')
+        if not resp.is_success:
+            # Progress endpoint might not exist, return empty dict
+            return {}
+        
+        try:
+            return resp.json()
+        except Exception:
+            return {}
+
+    def is_episode_watched(self, username: str, show_id: int, season_number: int, episode_number: int) -> bool:
+        """
+        Checks if an episode is already marked as watched for a user.
+
+        Args:
+            username: Serializd username
+            show_id: TMDB show ID
+            season_number: Season number
+            episode_number: Episode number
+
+        Returns:
+            True if episode is watched, False otherwise
+        """
+        try:
+            progress = self.get_user_show_progress(username, show_id)
+            if not progress:
+                return False
+            
+            # Check the watched episodes structure
+            watched_seasons = progress.get('watchedSeasons', [])
+            for season in watched_seasons:
+                if season.get('seasonNumber') == season_number:
+                    watched_episodes = season.get('watchedEpisodes', [])
+                    return episode_number in watched_episodes
+            return False
+        except Exception:
+            return False
+
     def log_show(self, show_id: int) -> bool:
         """
         Adds a given show (all seasons) to the user's watched list
